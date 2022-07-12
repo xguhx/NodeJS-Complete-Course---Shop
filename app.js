@@ -1,5 +1,5 @@
 //import routes from routes folder
-const adminRoute = require("./routes/admin");
+const adminData = require("./routes/admin");
 const shopRoute = require("./routes/shop");
 
 const path = require("path");
@@ -9,12 +9,13 @@ const bodyParser = require("body-parser");
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, "public")));
 
 //set the routes as middlewares
 //outsource routes
 
 //Only routes starting with /admin
-app.use("/admin", adminRoute);
+app.use("/admin", adminData.routes);
 
 app.use(shopRoute);
 
