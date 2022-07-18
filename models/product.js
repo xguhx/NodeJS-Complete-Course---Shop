@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { createBrotliCompress } = require("zlib");
 
 const p = path.join(
   path.dirname(require.main.filename),
@@ -25,6 +26,7 @@ module.exports = class Product {
   }
 
   save() {
+    this.id = Math.random().toString();
     getProductsFromFile((products) => {
       products.push(this);
       fs.writeFile(p, JSON.stringify(products), (err) => {
@@ -35,5 +37,12 @@ module.exports = class Product {
 
   static fetchAll(callback) {
     getProductsFromFile(callback);
+  }
+
+  static findById(id, callback) {
+    getProductsFromFile((products) => {
+      const product = products.find((p) => p.id === id);
+      callback(product);
+    });
   }
 };
