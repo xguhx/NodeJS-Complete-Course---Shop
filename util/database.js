@@ -1,13 +1,29 @@
-const Sequelize = require("sequelize");
+const mongodb = require("mongodb");
 require("dotenv").config();
-const sequelize = new Sequelize(
-  "node-complete",
-  "root",
-  process.env.dbpassword,
-  {
-    dialect: "mysql",
-    host: "localhost",
-  }
-);
+const MongoClient = mongodb.MongoClient;
 
-module.exports = sequelize;
+let _db;
+
+const mongoConnect = (callback) => {
+  MongoClient.connect(
+    `mongodb+srv://xguhx:${process.env.dbpassword}@cluster0.sa2p8.mongodb.net/shop?retryWrites=true&w=majority`
+  )
+    .then((client) => {
+      console.log("Connected!");
+      _db = client.db();
+      callback(client);
+    })
+    .catch((err) => {
+      console.log(err);
+      throw err;
+    });
+};
+
+const getDb = () => {
+  if (_db) return db;
+
+  throw "No DB Found!";
+};
+
+exports.mongoConnect = mongoConnect;
+exports.getDb = getDb;
