@@ -34,9 +34,7 @@ app.use(shopRoutes);
 app.use(errorController.get404);
 
 mongoose
-  .connect(
-    `mongodb+srv://xguhx:${process.env.dbpassword}@cluster0.sa2p8.mongodb.net/shop?retryWrites=true&w=majority`
-  )
+  .connect(`${process.env.DBSTRING}`)
   .then(() => {
     // const user = new User({
     //   name: "Gustavo",
