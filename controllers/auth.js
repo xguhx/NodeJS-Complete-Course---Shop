@@ -27,3 +27,13 @@ exports.postLogout = (req, res, next) => {
     console.log(err);
   });
 };
+
+exports.postSignup = (req, res, next) => {};
+
+exports.getSignup = (req, res, next) => {
+  res.render("auth/signup", {
+    path: "/signup",
+    pageTitle: "Signup",
+    isAuthenticated: false,
+  });
+};
