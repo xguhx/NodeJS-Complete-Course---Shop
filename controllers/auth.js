@@ -2,6 +2,8 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
+const { validationResult } = require("express-validator");
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 exports.getLogin = (req, res, next) => {
@@ -12,32 +14,52 @@ exports.getLogin = (req, res, next) => {
     pageTitle: "Login",
     errorMessage: message,
     path: "/login",
+    validationErrors: [],
+    oldInput: {
+      email: "",
+      password: "",
+    },
   });
 };
 
 exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).render("auth/login", {
+      path: "/login",
+      pageTitle: "Login",
+      errorMessage: errors.array()[0].msg,
+      validationErrors: errors.array(),
+      oldInput: {
+        email: email,
+        password: password,
+      },
+    });
+  }
   User.findOne({ email: email })
     .then((user) => {
-      if (!user) {
-        req.flash("error", "invalid email or password");
-        return res.redirect("/login");
-      }
-
       const auth = bcrypt.compareSync(password, user.password);
       if (auth) {
         req.session.isLoggedIn = true;
         req.session.user = user;
         return req.session.save((err) => {
           console.log(err);
-          res.redirect("/");
+          return res.redirect("/");
         });
       }
-      req.flash("error", "invalid email or password");
-      res.redirect("/login");
+      return res.status(422).render("auth/login", {
+        path: "/login",
+        pageTitle: "Login",
+        errorMessage: errors.array()[0].msg,
+        validationErrors: [],
+        oldInput: {
+          email: email,
+          password: password,
+        },
+      });
     })
-
     .catch((err) => console.log(err));
 };
 
@@ -51,42 +73,49 @@ exports.postLogout = (req, res, next) => {
 exports.postSignup = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
+  const confirmPassword = req.body.confirmPassword;
+  const errors = validationResult(req);
 
-  User.findOne({ email: email })
-    .then((user) => {
-      if (user) {
-        req.flash("error", "Email already registered");
-        return res.redirect("/login");
-      }
-      const hash = bcrypt.hashSync(password, 12);
-      const newUser = new User({
+  if (!errors.isEmpty()) {
+    return res.status(422).render("auth/signup", {
+      path: "/signup",
+      pageTitle: "Signup",
+      errorMessage: errors.array()[0].msg,
+      oldInput: {
         email: email,
-        password: hash,
-        cart: { items: [] },
-      });
-      return newUser.save().then((result) => {
-        const msg = {
-          to: email,
-          from: "gustavotavaresdev@gmail.com",
-          subject: "Sending with SendGrid is Fun",
-          text: "Thank you for Registering",
-          html: "<strong>Thank you for Registering</strong>",
-        };
-
-        sgMail
-          .send(msg)
-          .then(() => {
-            console.log("Email sent");
-          })
-          .catch((error) => {
-            console.error(error);
-          });
-        res.redirect("/login");
-      });
-    })
-    .catch((err) => {
-      console.log(err);
+        password: password,
+        confirmPassword: confirmPassword,
+      },
+      validationErrors: errors.array(),
     });
+  }
+
+  const hash = bcrypt.hashSync(password, 12);
+  const newUser = new User({
+    email: email,
+    password: hash,
+    cart: { items: [] },
+  });
+
+  return newUser.save().then((result) => {
+    const msg = {
+      to: email,
+      from: "gustavotavaresdev@gmail.com",
+      subject: "Thanks for registering in the Shop!",
+      text: "Thank you for Registering",
+      html: "<strong>Thank you for Registering</strong>",
+    };
+
+    sgMail
+      .send(msg)
+      .then(() => {
+        console.log("Email sent");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    res.redirect("/login");
+  });
 };
 
 exports.getSignup = (req, res, next) => {
@@ -96,6 +125,8 @@ exports.getSignup = (req, res, next) => {
     path: "/signup",
     pageTitle: "Signup",
     errorMessage: message,
+    oldInput: { email: "", password: "", confirmPassword: "" },
+    validationErrors: [],
   });
 };
 
@@ -184,9 +215,6 @@ exports.postNewPassword = (req, res, next) => {
   const newPassword = req.body.password;
   const userId = req.body.userId;
   const passwordToken = req.body.passwordToken;
-
-  console.log(passwordToken);
-  console.log(userId);
   User.findOne({
     resetToken: passwordToken,
     resetTokenExpirationDate: { $gt: Date.now() },
