@@ -8,9 +8,30 @@ const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
 const flash = require("connect-flash");
+const multer = require("multer");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
+
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Math.random() + "_" + file.originalname);
+  },
+});
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
 
 const app = express();
 const store = new MongoDBStore({
@@ -27,7 +48,13 @@ const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+);
+
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "images")));
+
 app.use(
   session({
     secret: "my secret(To be replaced for a longs trying value)",
@@ -73,6 +100,7 @@ app.use("/500", errorController.get500);
 app.use(errorController.get404);
 
 app.use((error, req, res, next) => {
+  console.log(error);
   res.status(500).render("500", {
     pageTitle: "Error",
     path: "/500",
