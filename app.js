@@ -51,6 +51,7 @@ app.use(helmet());
 app.use(compression());
 
 //produce log
+//manually logging
 const accessLogStream = fs.createWriteStream(
   path.join(__dirname, "access.log"),
   { flags: "a" }
@@ -59,6 +60,7 @@ const accessLogStream = fs.createWriteStream(
 app.use(morgan("combined", { stream: accessLogStream }));
 
 //MongoDB Store Configuration
+
 const store = new MongoDBStore({
   uri: `${process.env.DBSTRING}`,
   collection: "sessions",
