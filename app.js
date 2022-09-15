@@ -9,6 +9,7 @@ const MongoDBStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
 const flash = require("connect-flash");
 const multer = require("multer");
+const helmet = require("helmet");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
@@ -34,6 +35,8 @@ const fileFilter = (req, file, cb) => {
 };
 
 const app = express();
+app.use(helmet());
+
 const store = new MongoDBStore({
   uri: `${process.env.DBSTRING}`,
   collection: "sessions",
@@ -111,7 +114,7 @@ app.use((error, req, res, next) => {
 mongoose
   .connect(`${process.env.DBSTRING}`)
   .then(() => {
-    app.listen(3000);
+    app.listen(process.env.PORT || 3000);
   })
   .catch((err) => {
     console.log(err);
