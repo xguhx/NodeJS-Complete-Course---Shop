@@ -3,6 +3,7 @@ const { validationResult } = require("express-validator");
 
 const { deleteFile } = require("../util/file");
 
+//Serve the products page
 exports.getAddProduct = (req, res, next) => {
   res.render("admin/edit-product", {
     pageTitle: "Add Product",
@@ -14,12 +15,15 @@ exports.getAddProduct = (req, res, next) => {
   });
 };
 
+//Post Controller to Add a product
 exports.postAddProduct = (req, res, next) => {
   const title = req.body.title;
   const image = req.file;
   const price = req.body.price;
   const description = req.body.description;
 
+  //Check if image is uploaded
+  //If not, render error page
   if (!image) {
     return res.status(422).render("admin/edit-product", {
       pageTitle: "Add Product",
@@ -35,8 +39,11 @@ exports.postAddProduct = (req, res, next) => {
       },
     });
   }
+
+  //Check for Input Validation
   const errors = validationResult(req);
 
+  //If TThere is errors, render error page with details
   if (!errors.isEmpty()) {
     return res.status(422).render("admin/edit-product", {
       pageTitle: "Add Product",
@@ -53,6 +60,7 @@ exports.postAddProduct = (req, res, next) => {
     });
   }
 
+  //Create a new product
   const imageUrl = image.path;
   const product = new Product({
     title: title,
@@ -74,6 +82,7 @@ exports.postAddProduct = (req, res, next) => {
     });
 };
 
+//GET Edit Page Controller
 exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
   if (!editMode) {
@@ -102,6 +111,7 @@ exports.getEditProduct = (req, res, next) => {
     });
 };
 
+//POST Edit Page Controller
 exports.postEditProduct = (req, res, next) => {
   const prodId = req.body.productId;
   const updatedTitle = req.body.title;
@@ -109,6 +119,7 @@ exports.postEditProduct = (req, res, next) => {
   const image = req.file;
   const updatedDesc = req.body.description;
 
+  //Check for Validation of Inputs
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -128,6 +139,8 @@ exports.postEditProduct = (req, res, next) => {
     });
   }
 
+  //Find the product to be edited on DB
+  //Change it attributes for the new ones and save
   Product.findById(prodId)
     .then((product) => {
       if (product.userId.toString() !== req.user._id.toString()) {
@@ -152,6 +165,7 @@ exports.postEditProduct = (req, res, next) => {
     });
 };
 
+//GET products page Controller
 exports.getProducts = (req, res, next) => {
   Product.find({ userId: req.user._id })
     // .select('title price -_id')
@@ -171,14 +185,21 @@ exports.getProducts = (req, res, next) => {
     });
 };
 
+//DELETE product Controller
 exports.deleteProduct = (req, res, next) => {
   const prodId = req.params.productId;
+
+  //Find product on DB
   Product.findById(prodId)
     .then((product) => {
       if (!product) {
         next(new Error("Product not found!"));
       }
+
+      //Delete Image from Server
       deleteFile(product.imageUrl);
+
+      //Delete Product from DB
       return Product.deleteOne({ _id: prodId, userId: req.user._id });
     })
     .then(() => {

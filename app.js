@@ -1,4 +1,6 @@
+//Imports
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 const express = require("express");
@@ -11,10 +13,17 @@ const flash = require("connect-flash");
 const multer = require("multer");
 const helmet = require("helmet");
 const compression = require("compression");
+const morgan = arequire("morgan");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
 
+// Requiring Routes
+const adminRoutes = require("./routes/admin");
+const shopRoutes = require("./routes/shop");
+const authRoutes = require("./routes/auth");
+
+//Multer Configuration
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "images");
@@ -35,31 +44,44 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+//Helmet, Compression and Morgan Middleware
+
 const app = express();
 app.use(helmet());
 app.use(compression());
 
+//produce log
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, "access.log"),
+  { flags: "a" }
+);
+
+app.use(morgan("combined", { stream: accessLogStream }));
+
+//MongoDB Store Configuration
 const store = new MongoDBStore({
   uri: `${process.env.DBSTRING}`,
   collection: "sessions",
 });
 
+//Adding Protection with CSRF
 const csrfProtection = csrf();
 app.set("view engine", "ejs");
 app.set("views", "views");
 
-const adminRoutes = require("./routes/admin");
-const shopRoutes = require("./routes/shop");
-const authRoutes = require("./routes/auth");
-
+//Configuring Body Parser Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
+
+//Configuring Multer Middleware
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
 );
 
+//Configuring Middleware to serve the Public flder
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/images", express.static(path.join(__dirname, "images")));
 
+//Configuring Sessions Middleware
 app.use(
   session({
     secret: "my secret(To be replaced for a longs trying value)",
@@ -69,9 +91,11 @@ app.use(
   })
 );
 
+//Using CSRF and Flash(for error messages) Middleware
 app.use(csrfProtection);
 app.use(flash());
 
+//Middleware to locate the user and store it on the request
 app.use((req, res, next) => {
   if (!req.session.user) {
     return next();
@@ -90,18 +114,20 @@ app.use((req, res, next) => {
     });
 });
 
+//Authentication check Middleware
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.session.isLoggedIn;
   res.locals.csrfToken = req.csrfToken();
   next();
 });
 
+//Routes
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
-
 app.use("/500", errorController.get500);
 
+//Error Middleware
 app.use(errorController.get404);
 
 app.use((error, req, res, next) => {
@@ -113,6 +139,7 @@ app.use((error, req, res, next) => {
   });
 });
 
+//Mongoose and Server connection
 mongoose
   .connect(`${process.env.DBSTRING}`)
   .then(() => {

@@ -27,6 +27,7 @@ const userSchema = new Schema({
   },
 });
 
+//Add to cart Function
 userSchema.methods.addToCart = function (product) {
   const cartProductIndex = this.cart.items.findIndex((cp) => {
     return cp.productId.toString() === product._id.toString();
@@ -50,6 +51,7 @@ userSchema.methods.addToCart = function (product) {
   return this.save();
 };
 
+//Remove From Cart Function
 userSchema.methods.removeFromCart = function (productId) {
   const updatedCartItems = this.cart.items.filter((item) => {
     return item.productId.toString() !== productId.toString();
@@ -58,6 +60,7 @@ userSchema.methods.removeFromCart = function (productId) {
   return this.save();
 };
 
+//Clear Cart Function
 userSchema.methods.clearCart = function () {
   this.cart = { items: [] };
   return this.save();

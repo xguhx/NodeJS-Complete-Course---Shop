@@ -2,21 +2,30 @@ const Product = require("../models/product");
 const Order = require("../models/order");
 
 require("dotenv").config();
+
+//STRIPEfor Paymnets
 const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 const fs = require("fs");
 const path = require("path");
+
+//PDFKIT to Download the History
 const PDFDocument = require("pdfkit");
 
 const ITEMS_PER_PAGE = 2;
 
+//GET Products Controller With Pagination
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
   let totalItems;
+
+  //Count all Documents
   Product.find()
     .countDocuments()
     .then((numProducts) => {
       totalItems = numProducts;
+
+      //Find Products and Display using the Pagination
       Product.find()
         .skip((page - 1) * ITEMS_PER_PAGE)
         .limit(ITEMS_PER_PAGE)
@@ -41,8 +50,11 @@ exports.getProducts = (req, res, next) => {
     });
 };
 
+//GET Product Controller
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.productId;
+
+  //Find Product by Id and display
   Product.findById(prodId)
     .then((product) => {
       res.render("shop/product-detail", {
@@ -58,6 +70,8 @@ exports.getProduct = (req, res, next) => {
     });
 };
 
+//GET Index Controller with Pagination
+//Similar to GET Products Controller
 exports.getIndex = (req, res, next) => {
   const page = +req.query.page || 1;
   let totalItems;
@@ -89,7 +103,9 @@ exports.getIndex = (req, res, next) => {
     });
 };
 
+//GET Cart Controller
 exports.getCart = (req, res, next) => {
+  //Gettin user Cart
   req.user
     .populate("cart.items.productId")
     .then((user) => {
@@ -107,10 +123,14 @@ exports.getCart = (req, res, next) => {
     });
 };
 
+//POST Cart Controller
 exports.postCart = (req, res, next) => {
   const prodId = req.body.productId;
+
+  //Find Product by Id
   Product.findById(prodId)
     .then((product) => {
+      //Add Product to users Cart
       return req.user.addToCart(product);
     })
     .then((result) => {
@@ -119,8 +139,23 @@ exports.postCart = (req, res, next) => {
     });
 };
 
+//Post Delete Product From Cart
 exports.postCartDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
+
+  //user removeFromCart Function to remove Item
+
+  /*
+  //models/user.js
+  userSchema.methods.removeFromCart = function (productId) {
+  const updatedCartItems = this.cart.items.filter((item) => {
+    return item.productId.toString() !== productId.toString();
+  });
+  this.cart.items = updatedCartItems;
+  return this.save();
+};
+  */
+
   req.user
     .removeFromCart(prodId)
     .then((result) => {
@@ -133,10 +168,12 @@ exports.postCartDeleteProduct = (req, res, next) => {
     });
 };
 
+//GET Checkout Controller
 exports.getCheckout = (req, res, next) => {
   let products;
   let total = 0;
 
+  //Get Total from users cart
   req.user
     .populate("cart.items.productId")
     .then((user) => {
@@ -145,6 +182,7 @@ exports.getCheckout = (req, res, next) => {
         total += p.quantity * p.productId.price;
       });
 
+      //Use Stripe for Payment
       return stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: products.map((p) => {
@@ -180,13 +218,16 @@ exports.getCheckout = (req, res, next) => {
     });
 };
 
+//GET Checkout Success Controller
 exports.getCheckoutSuccess = (req, res, next) => {
+  //Get users Items
   req.user
     .populate("cart.items.productId")
     .then((user) => {
       const products = user.cart.items.map((i) => {
         return { quantity: i.quantity, product: { ...i.productId._doc } };
       });
+      //Create New Order and Add it to the User
       const order = new Order({
         user: {
           email: req.session.user.email,
@@ -197,6 +238,7 @@ exports.getCheckoutSuccess = (req, res, next) => {
       return order.save();
     })
     .then((result) => {
+      //Remove Purchased items from cart
       return req.user.clearCart();
     })
     .then(() => {
@@ -209,7 +251,9 @@ exports.getCheckoutSuccess = (req, res, next) => {
     });
 };
 
+//GET Orders Controller
 exports.getOrders = (req, res, next) => {
+  //Find User and display orders
   Order.find({ "user.userId": req.user })
     .then((orders) => {
       res.render("shop/orders", {
@@ -225,24 +269,31 @@ exports.getOrders = (req, res, next) => {
     });
 };
 
+//GET Invoice Controller
 exports.getInvoice = (req, res, next) => {
   const orderId = req.params.orderId;
   const invoiceName = "invoice-" + orderId + ".pdf";
   const invoicePath = path.join("data", "invoices", invoiceName);
 
+  //Find Order by Id
   Order.findById(orderId)
     .then((order) => {
+      //Valdiation
       if (!order) {
         return next(new Error("No order found!"));
       }
       if (order.user.userId.toString() !== req.user._id.toString()) {
         return next(new Error("Unauthorized"));
       }
+
+      //Set Headers for PDF
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
         'inline; filename="' + invoiceName + '"'
       );
+
+      //Create PDF
       const pdfDoc = new PDFDocument();
       pdfDoc.pipe(fs.createWriteStream(invoicePath));
       pdfDoc.pipe(res);
