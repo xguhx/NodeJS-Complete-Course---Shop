@@ -13,7 +13,7 @@ const flash = require("connect-flash");
 const multer = require("multer");
 const helmet = require("helmet");
 const compression = require("compression");
-const morgan = arequire("morgan");
+const morgan = require("morgan");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
@@ -86,7 +86,7 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 //Configuring Sessions Middleware
 app.use(
   session({
-    secret: "my secret(To be replaced for a longs trying value)",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: store,
