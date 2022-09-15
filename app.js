@@ -10,6 +10,7 @@ const csrf = require("csurf");
 const flash = require("connect-flash");
 const multer = require("multer");
 const helmet = require("helmet");
+const compression = require("compression");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
@@ -36,6 +37,7 @@ const fileFilter = (req, file, cb) => {
 
 const app = express();
 app.use(helmet());
+app.use(compression());
 
 const store = new MongoDBStore({
   uri: `${process.env.DBSTRING}`,
