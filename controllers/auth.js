@@ -31,6 +31,7 @@ exports.postLogin = (req, res, next) => {
   //Check for Input Validation
   //Send error page if Errors
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
     return res.status(422).render("auth/login", {
       path: "/login",
@@ -58,10 +59,11 @@ exports.postLogin = (req, res, next) => {
           return res.redirect("/");
         });
       }
+      //else
       return res.status(422).render("auth/login", {
         path: "/login",
         pageTitle: "Login",
-        errorMessage: errors.array()[0].msg,
+        errorMessage: "Wrong Password!",
         validationErrors: [],
         oldInput: {
           email: email,
