@@ -203,7 +203,7 @@ exports.postReset = (req, res, next) => {
           text: "Password Reset",
           html: `
           <p> You requested a Password Reset </p>
-          <p> Click this <a href="http://localhost:3000/reset/${token}">link</a> to reset your . </p>
+          <p> Click this <a href="https://shopping-nodejs-app.herokuapp.com/${token}">link</a> to reset your . </p>
 
           `,
         };
