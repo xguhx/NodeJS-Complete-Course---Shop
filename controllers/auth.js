@@ -199,11 +199,11 @@ exports.postReset = (req, res, next) => {
         const msg = {
           to: req.body.email,
           from: "gustavotavaresdev@gmail.com",
-          subject: "Sending with SendGrid is Fun",
+          subject: "Shopping App - Reset Password",
           text: "Password Reset",
           html: `
           <p> You requested a Password Reset </p>
-          <p> Click this <a href="https://shopping-nodejs-app.herokuapp.com/${token}">link</a> to reset your . </p>
+          <p> Click this <a href="https://shopping-nodejs-app.herokuapp.com/reset/${token}">link</a> to reset your Password. </p>
 
           `,
         };
