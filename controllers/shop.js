@@ -12,7 +12,7 @@ const path = require("path");
 //PDFKIT to Download the History
 const PDFDocument = require("pdfkit");
 
-const ITEMS_PER_PAGE = 2;
+const ITEMS_PER_PAGE = 4;
 
 //GET Products Controller With Pagination
 exports.getProducts = (req, res, next) => {
@@ -105,7 +105,7 @@ exports.getIndex = (req, res, next) => {
 
 //GET Cart Controller
 exports.getCart = (req, res, next) => {
-  //Gettin user Cart
+  //Getting user Cart
   req.user
     .populate("cart.items.productId")
     .then((user) => {
