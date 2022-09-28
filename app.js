@@ -47,7 +47,7 @@ const fileFilter = (req, file, cb) => {
 //Helmet, Compression and Morgan Middleware
 
 const app = express();
-app.use(helmet());
+// app.use(helmet());
 app.use(compression());
 
 //produce log
