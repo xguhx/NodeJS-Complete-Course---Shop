@@ -1,4 +1,5 @@
 # NodeJs Express Shopping App
+
 ---
 
 ### This app was made using:
@@ -34,4 +35,11 @@
 > When finishing a purchase, user will be prompt to pay (Mock payment using STRIPE)
 
 > User can see his orders and download invoices in PDF.
+
+---
+
+Feel free to send me a message if you have an idea on how to improve this App.
+Also feel free to contribute!
+
+Thank you fo reading!
 
