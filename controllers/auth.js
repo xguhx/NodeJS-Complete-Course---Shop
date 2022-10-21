@@ -2,6 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
+require("dotenv").config();
 const { validationResult } = require("express-validator");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -126,8 +127,8 @@ exports.postSignup = (req, res, next) => {
       to: email,
       from: "gustavotavaresdev@gmail.com",
       subject: "Thanks for registering in the Shop!",
-      text: "Thank you for Registering",
-      html: "<strong>Thank you for Registering</strong>",
+      text: "Thank you for registering to my Shopping App!",
+      html: "<strong>Thank you for registering to my Shopping App!</strong>",
     };
 
     sgMail
@@ -203,7 +204,7 @@ exports.postReset = (req, res, next) => {
           text: "Password Reset",
           html: `
           <p> You requested a Password Reset </p>
-          <p> Click this <a href="https://shopping-nodejs-app.herokuapp.com/reset/${token}">link</a> to reset your Password. </p>
+          <p> Click this <a href="${process.env.API}/reset/${token}">link</a> to reset your Password. </p>
 
           `,
         };

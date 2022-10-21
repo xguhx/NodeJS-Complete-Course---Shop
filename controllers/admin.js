@@ -1,6 +1,5 @@
 const Product = require("../models/product");
 const { validationResult } = require("express-validator");
-
 const { deleteFile } = require("../util/file");
 const ITEMS_PER_PAGE = 8;
 //Serve the products page

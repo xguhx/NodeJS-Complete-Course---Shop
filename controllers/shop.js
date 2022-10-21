@@ -32,6 +32,7 @@ exports.getProducts = (req, res, next) => {
         .then((products) => {
           res.render("shop/product-list", {
             prods: products,
+            message: ``,
             pageTitle: "products",
             path: "/products",
             currentPage: page,
@@ -73,34 +74,10 @@ exports.getProduct = (req, res, next) => {
 //GET Index Controller with Pagination
 //Similar to GET Products Controller
 exports.getIndex = (req, res, next) => {
-  const page = +req.query.page || 1;
-  let totalItems;
-  Product.find()
-    .countDocuments()
-    .then((numProducts) => {
-      totalItems = numProducts;
-      Product.find()
-        .skip((page - 1) * ITEMS_PER_PAGE)
-        .limit(ITEMS_PER_PAGE)
-        .then((products) => {
-          res.render("shop/index", {
-            prods: products,
-            pageTitle: "Shop",
-            path: "/",
-            currentPage: page,
-            hasNextPage: ITEMS_PER_PAGE * page < totalItems,
-            hasPreviousPage: page > 1,
-            nextPage: page + 1,
-            previousPage: page - 1,
-            lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
-          });
-        });
-    })
-    .catch((err) => {
-      const error = new Error(err);
-      error.httpStatusCode = 500;
-      return next(error);
-    });
+  res.render("shop/index", {
+    pageTitle: "Shop",
+    path: "/",
+  });
 };
 
 //GET Cart Controller
@@ -124,18 +101,43 @@ exports.getCart = (req, res, next) => {
 };
 
 //POST Cart Controller
-exports.postCart = (req, res, next) => {
-  const prodId = req.body.productId;
+exports.postCart = async (req, res, next) => {
+  const page = +req.query.page || 1;
+  let totalItems;
 
-  //Find Product by Id
-  Product.findById(prodId)
-    .then((product) => {
-      //Add Product to users Cart
-      return req.user.addToCart(product);
+  const prodId = req.body.productId;
+  const prod = await Product.findById(prodId);
+  req.user.addToCart(prod);
+  console.log(prod);
+
+  Product.find()
+    .countDocuments()
+    .then((numProducts) => {
+      totalItems = numProducts;
+
+      //Find Products and Display using the Pagination
+      Product.find()
+        .skip((page - 1) * ITEMS_PER_PAGE)
+        .limit(ITEMS_PER_PAGE)
+        .then((products) => {
+          res.render("shop/product-list", {
+            prods: products,
+            message: `${prod.title} was added to cart!`,
+            pageTitle: "products",
+            path: "/products",
+            currentPage: page,
+            hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+            hasPreviousPage: page > 1,
+            nextPage: page + 1,
+            previousPage: page - 1,
+            lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
+          });
+        });
     })
-    .then((result) => {
-      console.log(result);
-      res.redirect("/cart");
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -207,6 +209,7 @@ exports.getCheckout = (req, res, next) => {
       res.render("shop/checkout", {
         path: "/checkout",
         pageTitle: "Checkout",
+        STRIPE_PK: process.env.STRIPE_PK,
         products: products,
         totalSum: total,
         sessionId: session.id,
