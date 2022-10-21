@@ -2,7 +2,7 @@ const Product = require("../models/product");
 const { validationResult } = require("express-validator");
 
 const { deleteFile } = require("../util/file");
-
+const ITEMS_PER_PAGE = 8;
 //Serve the products page
 exports.getAddProduct = (req, res, next) => {
   res.render("admin/edit-product", {
@@ -167,16 +167,33 @@ exports.postEditProduct = (req, res, next) => {
 
 //GET products page Controller
 exports.getProducts = (req, res, next) => {
+  const page = +req.query.page || 1;
+  let totalItems;
+
   Product.find({ userId: req.user._id })
-    // .select('title price -_id')
-    // .populate('userId', 'name')
-    .then((products) => {
-      console.log(products);
-      res.render("admin/products", {
-        prods: products,
-        pageTitle: "Admin Products",
-        path: "/admin/products",
-      });
+    .countDocuments()
+    .then((numProducts) => {
+      totalItems = numProducts;
+
+      Product.find({ userId: req.user._id })
+        .skip((page - 1) * ITEMS_PER_PAGE)
+        .limit(ITEMS_PER_PAGE)
+        // .select('title price -_id')
+        // .populate('userId', 'name')
+        .then((products) => {
+          console.log(products);
+          res.render("admin/products", {
+            currentPage: page,
+            hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+            hasPreviousPage: page > 1,
+            nextPage: page + 1,
+            previousPage: page - 1,
+            lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
+            prods: products,
+            pageTitle: "Admin Products",
+            path: "/admin/products",
+          });
+        });
     })
     .catch((err) => {
       const error = new Error(err);

@@ -12,7 +12,7 @@ const path = require("path");
 //PDFKIT to Download the History
 const PDFDocument = require("pdfkit");
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 8;
 
 //GET Products Controller With Pagination
 exports.getProducts = (req, res, next) => {
@@ -180,6 +180,7 @@ exports.getCheckout = (req, res, next) => {
       products = user.cart.items;
       products.forEach((p) => {
         total += p.quantity * p.productId.price;
+        console.log(total, " TOTAL!");
       });
 
       //Use Stripe for Payment
@@ -192,7 +193,7 @@ exports.getCheckout = (req, res, next) => {
               product_data: {
                 name: p.productId.title,
               },
-              unit_amount: p.productId.price * 100,
+              unit_amount: Math.round(p.productId.price * 100),
             },
             quantity: p.quantity,
           };
