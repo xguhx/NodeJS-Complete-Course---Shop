@@ -1,7 +1,7 @@
 {
-  "name": "nodejs-complete-guide",
+  "name": "NodeJs Express Shopping App",
   "version": "1.0.0",
-  "description": "Complete Node.js Guide",
+  "description": "NodeJs Express Shopping App",
   "main": "app.js",
   "engines": {
     "node": "16.14.0"
